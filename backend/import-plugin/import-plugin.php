@@ -248,6 +248,7 @@ class ImportPlugin
 
                 if( $post["id"] ) {
                     update_post_meta( $post["id"], '_wgd_customer_address', $post['address'] );
+                    wp_set_post_terms( $post["id"], $post['category'], 'customer_category', false );
                 }
                             
             }
