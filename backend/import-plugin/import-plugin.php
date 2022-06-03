@@ -248,10 +248,14 @@ class ImportPlugin
 
                 if( $post["id"] ) {
                     update_post_meta( $post["id"], '_wgd_customer_address', $post['address'] );
-                    $cat_id = wp_insert_term( $post['category'], 'customer_category', array( 'parent' => 0 ) );
 
-                    // create new term with name = $exchange['term_id'] - BUG?
-                    wp_set_post_terms( $post["id"], array( $cat_id['term_id'] ), 'customer_category', false );
+                    $cat = term_exists( $post['category'], 'customer_category' );
+ 
+                    if ( ! $cat ) {
+                        $cat = wp_insert_term( $post['category'], 'customer_category', array('description'=> '') );
+                    }
+
+                    wp_set_post_terms( $post["id"], array( $cat->term_id ), 'customer_category', false );
                 }
                             
             }
