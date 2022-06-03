@@ -255,7 +255,7 @@ class ImportPlugin
                         $cat = wp_insert_term( $post['category'], 'customer_category', array('description'=> '') );
                     }
 
-                    wp_set_post_terms( $post["id"], array( $cat->term_id ), 'customer_category', false );
+                    wp_set_post_terms( $post["id"], array( $cat['term_id'] ), 'customer_category', false );
                 }
                             
             }
