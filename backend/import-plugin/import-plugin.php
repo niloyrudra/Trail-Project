@@ -31,7 +31,7 @@ class ImportPlugin
         /**
          * Show 'insert posts' button on backend
          */
-        if( $pagenow == "edit.php" && $_GET['post_type'] == "wgd_customer" && !get_posts( array( 'post_type' => 'wgd_customer', 'numberposts' => 1 ) ) ) {
+        if( $pagenow == "edit.php" && $_GET['post_type'] == "wgd-locations" && !get_posts( array( 'post_type' => 'wgd-locations', 'numberposts' => 1 ) ) ) {
             add_action( "admin_notices", array( static::class, "showing_admin_notice" ));
         }
 
@@ -42,14 +42,14 @@ class ImportPlugin
 
     }
 
-    // Register Custom Post Type "wgd_customer"
+    // Register Custom Post Type "wgd-locations"
     public static function register_custom_post_type_n_taxonomy() {
 
         $labels = array(
-            'name'                  => _x( 'Customers Detail', 'Post type general name', 'wgd' ),
-            'singular_name'         => _x( 'Customer Detail', 'Post type singular name', 'wgd' ),
-            'menu_name'             => _x( 'Customers Detail', 'Admin Menu text', 'wgd' ),
-            'name_admin_bar'        => _x( 'Customer Detail', 'Add New on Toolbar', 'wgd' ),
+            'name'                  => _x( 'Customers Location', 'Post type general name', 'wgd' ),
+            'singular_name'         => _x( 'Customer Location', 'Post type singular name', 'wgd' ),
+            'menu_name'             => _x( 'Customers Location', 'Admin Menu text', 'wgd' ),
+            'name_admin_bar'        => _x( 'Customer Location', 'Add New on Toolbar', 'wgd' ),
             'add_new'               => __( 'Add New', 'wgd' ),
             'add_new_item'          => __( 'Add New Customer', 'wgd' ),
             'new_item'              => __( 'New Customer', 'wgd' ),
@@ -79,7 +79,7 @@ class ImportPlugin
             'show_ui'            => true,
             'show_in_menu'       => true,
             'query_var'          => true,
-            'rewrite'            => array( 'slug' => 'customer' ),
+            'rewrite'            => array( 'slug' => 'locations' ),
             'capability_type'    => 'post',
             'has_archive'        => true,
             'hierarchical'       => false,
@@ -91,7 +91,7 @@ class ImportPlugin
         );
 
         // Registering Custom Post Type
-        register_post_type( "wgd_customer", $args );
+        register_post_type( "wgd-locations", $args );
 
         // Add new taxonomy, make it hierarchical (like categories)
         $labels = array(
@@ -113,25 +113,33 @@ class ImportPlugin
             'labels'            => $labels,
             'show_ui'           => true,
             'show_admin_column' => true,
+			'show_in_rest'		=> true,
             'query_var'         => true,
-            'rewrite'           => array( 'slug' => 'customer_category' ),
+            'rewrite'           => array( 'slug' => 'wgd-category' ),
         );
     
         // Register Custom Taxonomy
-        register_taxonomy( 'customer_category', array( 'wgd_customer' ), $args );
+        register_taxonomy( 'wgd-category', array( 'wgd-locations' ), $args );
     }
 
     public static function add_customer_meta_box() {
-        add_meta_box( 'wgd_meta_box_id', __( "Customer's Address", "wgd" ), array( static::class, 'custom_meta_boxes_fields_callback' ), 'wgd_customer', 'advanced', 'default' );
+        add_meta_box(
+			'wgd_meta_box_id',
+			__( "Customer's Address", "wgd" ),
+			array( static::class, 'custom_meta_boxes_fields_callback' ),
+			'wgd-locations',
+			'advanced',
+			'default'
+		);
     }
 
     public static function custom_meta_boxes_fields_callback( $post ) {
 
         wp_nonce_field( 'wgd_meta_data_gen', "wgd_meta_data_gen_nonce" );
 
-        $data = get_post_meta( $post->ID, '_wgd_customer_address', true );
+        $data = get_post_meta( $post->ID, '_wgd-locations_address', true );
 
-        echo '<label for="wgd_customer_address">' . __( 'Address:', 'wgd' ) . '</label><input type="text" class="widefat" size="25" name="wgd_customer_address" id="wgd_customer_address" value="' . esc_attr( $data ) . '" />';
+        echo '<label for="wgd-locations_address">' . __( 'Address:', 'wgd' ) . '</label><input type="text" class="widefat" size="25" name="wgd-locations_address" id="wgd-locations_address" value="' . esc_attr( $data ) . '" />';
 
     }
 
@@ -144,10 +152,10 @@ class ImportPlugin
         if( defined( "DOING_AUTOSAVE" ) && DOING_AUTOSAVE ) return $post_id;
         if( ! current_user_can( 'edit_post', $post_id ) ) return $post_id;
 
-        $data = isset( $_POST['wgd_customer_address'] ) ? sanitize_text_field( $_POST['wgd_customer_address'] ) : '';
+        $data = isset( $_POST['wgd-locations_address'] ) ? sanitize_text_field( $_POST['wgd-locations_address'] ) : '';
 
         // Update Meta Field
-        update_post_meta( $post_id, '_wgd_customer_address', $data );
+        update_post_meta( $post_id, '_wgd-locations_address', $data );
 
     }
 
@@ -170,7 +178,7 @@ class ImportPlugin
             // Change these to whatever you set
             $wgd = array(
                 "custom-field" => "insert_customer_attachment",
-                "custom-post-type" => "wgd_customer"
+                "custom-post-type" => "wgd-locations"
             );
 
             // Get the data from all those CSVs!
@@ -247,15 +255,15 @@ class ImportPlugin
                 ));
 
                 if( $post["id"] ) {
-                    update_post_meta( $post["id"], '_wgd_customer_address', $post['address'] );
+                    update_post_meta( $post["id"], '_wgd-locations_address', $post['address'] );
 
-                    $cat = term_exists( $post['category'], 'customer_category' );
+                    $cat = term_exists( $post['category'], 'wgd-category' );
  
                     if ( ! $cat ) {
-                        $cat = wp_insert_term( $post['category'], 'customer_category', array('description'=> '') );
+                        $cat = wp_insert_term( $post['category'], 'wgd-category', array('description'=> '') );
                     }
 
-                    wp_set_post_terms( $post["id"], array( $cat['term_id'] ), 'customer_category', false );
+                    wp_set_post_terms( $post["id"], array( $cat['term_id'] ), 'wgd-category', false );
                 }
                             
             }
